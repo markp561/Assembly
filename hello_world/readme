@@ -1,0 +1,11 @@
+To execute an assembly program we need to compile the program and then link the object into an executable
+
+To execute hello.asm:
+First compile the program
+    nasm -f elf32 hello.asm
+
+then link it 
+    ld -m elf_i386 hello.o
+
+then run the program
+    ./hello

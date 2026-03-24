@@ -1,0 +1,230 @@
+Memory and Addressing Modes:
+    Declaring Static Data Regions:
+        
+        - can declare static data regions -- analogous to global variables -- using special assembler directives for this purpose
+
+        - data declarations should be preceded by the .DATA directive
+            - following this directive, the directives DB, DW, DD can be used to delcare one, two, and four byte data locations, respectively.
+
+        - declared locations can be labeled with names for later reference
+            - similar to declaring variables by name, but abides by some lower level rules
+                - i.g. locations declared in sequence will be located in memory next to one another
+            
+
+    Example Declarations:
+        
+        .DATA
+        var1  DB 64    ; Declare a byte, referred to as location var1, containing the value 64
+        var2  DB ?     ; Declare an uninitialized byte, referred to as location var2
+              DB 10    ; Declare a byte with no label, containing the value 10. Its location is var2 + 1
+        X     DW ?     ; Declare a 2-byte uninitialized value, referred to as location X
+        Y     DD 30000 ; Declare a 4-byte value, referred to as location Y, initialized to 30000
+
+
+        - unlike in high level languages where arrays can have many dimensions and are accessed by indices, arrays in x86 assembly language are simply a number of cells located contiguosly in memory
+            - an array can be declared by just listing the values, as in the example below
+        - two other common methods used for declaring arrays of data are the DUP directive and the use of string literals
+            - the DUP directive tells the assembler to duplicate an expression a given number of times
+                - i.g. 4 DUP(2) is equivalent to 2, 2, 2, 2
+
+    
+    Some Examples:
+
+        Z     DD 1, 2, 3      ; declare three 4-byte values, initialized to 1, 2, and 3. The value of Z + 8 will be 3
+        bytes DB 10 DUP(?)    ; declare 10 uninitialized bytes starting at location bytes
+        arr   DD 100 DUP(0)   ; declare 100 4-byte words starting at location arr, all initialized to 0
+        str   DB 'hello', 0   ; declare 6 bytes starting at the address str, initialized to the ASCII character values for hello and the null (0) byte
+
+
+
+
+    Addressing Memory
+        
+        - Modern x86-compatible processors are capable of addressing up to 2^32 bytes of memory
+            - memory addresses are 32 bits wide
+        - In the above examples, where we used labels to refer to memory regions, these labels are actually replaced by the assembler with 32-bit quantities that specify addresses in memory
+        - In addition to supporting referring to memory regions by labels (i.e. constant values), the x86 provides a flexible scheme for computing and referring to memory addresses
+            - up to two of the 32-bit registers and a 32-bit signed constant can be added together to compute a memory address
+            - one of the registers can be optionally pre-multiplied by 2, 4, or 8
+
+        - The addressing modes can be used with many x86 instructions
+            - here some examples show the mov instruction that moves data between registers and memory
+                - this instruction has two operands: destination, source
+
+
+        Examples of mov instructions using address computations:
+            
+            mov eax, [ebx]          ; Move the 4 bytes in memory at the address contained in ebx into eax
+
+            mov [var], ebx          ; Move the contents of ebx into the 4 bytes at memory address var (var is a 32-bit constant)
+
+            mov eax, [esi-4]        ; Move 4 bytes at memory address esi + (-4) into eax
+
+            mov [esi + eax], cl     ; Move the contents of cl into the byte at address esi + eax
+            
+            mov edx, [esi+4*ebx]    ; Move the 4 bytes of data at address esi+4*ebx into edx
+
+        
+        Examples of invalid address calculations:
+    
+            mov eax, [ebx-ecx]      ; Can only add register values
+
+            mov [eax+esi+edi], ebx  ; At most 2 registers in address computation
+    
+    
+    
+
+    Size Directives
+        
+        - in general, the intended size of the data item at a given memory address can be inferred from the assembly code instruction in which it is referenced
+            - i.g. in all of the above instructions, the size of the memory regions could be inferred from the size of the gerister operand
+                - when we were loading a 32-bit register, the assembler could infer that the region of the memory we were referring to was 4 bytes wide
+                - when we were storing the value of a one byte register to memory, the assembler could infer that we wanted the address to refer to a single byte in memory
+
+        - however, in some cases the size o a referred-to memory region is ambiguous
+            - consider the instruction:
+
+                mov [ebx], 2
+
+                - Should this instruction move the value 2 into the single byte at address ebx
+                - Or should it move the 32-bit integer representation of 2 into the 4-bytes starting at address ebx
+                
+                - Either is a valid possible interpretation --> the assembler must be explicitly directed as to which is correct
+
+
+        - The size directives BYTE PTR, WORD PTR, DWORD PTR serve this purpose
+            - indicating sizes of 1, 2, and 4 bytes respectivelyy
+
+
+        Example:
+
+            mov BYTE PTR [ebx], 2       ; Move 2 into the single byte at the address stored in ebx
+
+            mov WORD PTR [ebx], 2       ; Move the 16-bit integer representation of 2 into the 2 bytes starting at the address in ebx
+
+            mov DWORD PTR [ebx], 2      ; Move the 32-bit integer representation of 2 into the 4 bytes starting at the address in ebx
+
+
+
+
+    Instructions
+    
+        - Machine instructions generaly fall into three categories:
+            
+            1. Data Movement
+            2. Arithmetic/Logic
+            3. Control-Flow
+
+
+        - We use the following notation:
+
+            <reg32>     Any 32-bit register (eax, ebx, ecx, edx, esi, edi, esp, ebp)
+            <reg16>     Any 16-bit register (ax, bx, cx, dx)
+            <reg8>      Any 8-bit register  (ah, bh, ch, dh, al, bl, cl, dl)
+            <reg>       Any register
+            <mem>       A memory address    (e.g. [eax], [var+4], or dword ptr [eax+ebx])
+            <con32>     Any 32-bit constant
+            <con16>     Any 16-bit constant
+            <con8>      Any 8-bit constant
+            <con>       Any 8,16, or 32 bit constant
+        
+
+    *Data Movement Instructions*
+
+        mov -- Move (Opcodes: 88, 89, 8A, 8B, 8C, 8E, ...)
+
+            - the move instruction copies the data item referred to by its second operand (i.e. register contents, memory contents, or a constant value) into the location referred to by its first operand (i.e. a register or memory)
+
+            - while register-to-register moves are possible, direct memory-to-memory moves are not
+                - in cases where memory transfers are desired, the source memory contents must first be loaded into a register, then can be stored to the destination memory address
+
+
+            --Syntax--
+
+                mov <reg>, <reg>
+                mov <reg>, <mem>
+                mov <mem>, <reg>
+                mov <reg>, <const>
+                mov <mem>, <const>
+
+            
+            --Examples--
+
+                mov eax, ebx                -- copy the value in ebx into eax
+                mov byte ptr [var], 5       -- store the value 5 into the byte at location var
+
+
+
+
+        push -- Push stack (Opcodes: FF, 89, 8A, 8B, 8C, 8E, ...)
+            
+            - the push instruction places its operand onto the top of the hardware supported stack in memory 
+                - specifically, push first decrements esp by 4, then places its operand into the contents of the 32-bit location at address esp
+                    - esp (the stack pointer) is decremented by push since the x86 stack grows down (i.e. grows from high addresses to lower addresses)
+
+
+            --Syntax--
+
+                push <reg32>
+                push <mem>
+                push <con32>
+
+
+            --Examples--
+
+                push eax    -- push eax on the stack
+                push [var]  -- push the 4 bytes at address var onto the stack
+        
+
+
+
+        pop -- Pop Stack
+
+            - the pop instruction removes the 4-byte data element from the top of the hardware-supported stack into the specified operand (i.e. the register or memory location)
+            - it first moves the 4 bytes located at memory location sp into the specified register or memory location, and then increments sp by 4
+
+
+            --Syntax--
+
+                pop <reg32>
+                pop <mem>
+
+
+            --Examples--
+
+                pop edi     -- pop the top element of the stack into edi
+                pop [ebx]   -- pop the top element of the stack into memory at the four bytes starting at location ebx
+
+
+
+
+        lea -- Load Effective Address
+
+            - the lea instruction plcaes the address specified by its second operand into the register specified by its first operand
+                - note: the contents of the memory location ar enot loaded, only the effective address is computed and placed into the register
+                - this is useful for obtaining a pointer into a memory region
+
+
+            --Syntax--
+                
+                lea <reg32>, <mem>
+
+
+            --Examples--
+                
+                lea edi, [ebx + esi*4]      -- The quantity ebx + esi*4 is placed in edi
+                lea eax, [var]              -- The value in var is placed in eax
+                lea eax, [var]              -- The value val is placed in eax
+
+    
+
+
+    Arithmetic and Logic Instructions
+
+        add -- Integer Addition
+        
+
+
+
+
+
