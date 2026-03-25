@@ -1,5 +1,6 @@
 Memory and Addressing Modes:
-    Declaring Static Data Regions:
+
+    ----Declaring Static Data Regions----
         
         - can declare static data regions -- analogous to global variables -- using special assembler directives for this purpose
 
@@ -38,7 +39,7 @@ Memory and Addressing Modes:
 
 
 
-    Addressing Memory
+    ----Addressing Memory----
         
         - Modern x86-compatible processors are capable of addressing up to 2^32 bytes of memory
             - memory addresses are 32 bits wide
@@ -74,7 +75,7 @@ Memory and Addressing Modes:
     
     
 
-    Size Directives
+    ----Size Directives----
         
         - in general, the intended size of the data item at a given memory address can be inferred from the assembly code instruction in which it is referenced
             - i.g. in all of the above instructions, the size of the memory regions could be inferred from the size of the gerister operand
@@ -107,7 +108,7 @@ Memory and Addressing Modes:
 
 
 
-    Instructions
+    ----Instructions----
     
         - Machine instructions generaly fall into three categories:
             
@@ -129,7 +130,9 @@ Memory and Addressing Modes:
             <con>       Any 8,16, or 32 bit constant
         
 
-    *Data Movement Instructions*
+
+
+    ----Data Movement Instructions----
 
         mov -- Move (Opcodes: 88, 89, 8A, 8B, 8C, 8E, ...)
 
@@ -219,10 +222,331 @@ Memory and Addressing Modes:
     
 
 
-    Arithmetic and Logic Instructions
+    ----Arithmetic and Logic Instructions----
 
         add -- Integer Addition
+            
+            - the add insturction adds together its two operands
+                - stores the result in its first operand
+
+            - note: while both operands may be registers, at most one operand may be a memory location
+
+            
+            --Syntax--
+                
+                add <reg>, <reg>
+                add <reg>, <mem>   
+                add <mem>, <reg>
+                add <reg>, <con>
+                add <mem>, <con>
+
+            
+            --Examples--
+
+                add eax, 10                 -- eax <-- eax + 10
+                add BYTE PTR [var], 10      -- add 10 to the single byte stored at memory address var
+
+
+
+
+        sub -- Integer Subtraction
+
+            - the sub instruction stores in the value of its first operand the result of subtraacting the value of its second operand from the value of its first operand.
+            
+
+            --Syntax--
+
+                sub <reg>, <reg>
+                sub <reg>, <mem>
+                sub <mem>, <reg>
+                sub <reg>, <con>
+                sub <mem>, <con>
+
+
+            --Examples--
+
+                sub al, ah      -- al <-- al - ah
+                sub eax, 216    -- subtract 216 from the value stored in eax
+
+
+
+
+        inc, dec -- Increment, Decrement
+
+            - the inc instruction increments the contents of its operand by one
+            - the dec instruction decrements the contents of its operand by one
+
+
+            --Syntax--
+                
+                inc <reg>
+                inc <mem>
+
+                dec <reg>
+                dec <mem>
+
+
+            --Examples--
+
+                dec eax                 -- subtract one from the contents of eax
+                inc DWORD PTR [var]     -- add one to the 32-bit integer stored at location var
         
+
+
+
+        imul -- Integer Multiplication
+
+            - the imul instruction has two basic formats
+                - two-operand and three-operand
+
+            - the two-operand form multiplies its two operands together and stores the result in the first operand
+            - the result -- the first operand -- must be a register
+
+            - the three-operand form multiplies its second and third operands together and stores the result in the first operand
+                - again, the first operand must be a register
+                - the third operand is restricted to being a constant value
+
+            
+            --Syntax--
+
+                -- Two-operand form
+                imul <reg32>, <reg32>
+                imul <reg32>, <mem>
+
+                -- Three-operand form
+                imul <reg32>, <reg32>, <con>
+                imul <reg32>, <mem>, <con>
+
+
+            --Examples--
+                
+                imul eax, [var]         -- multiply the contents of eax by the 32-bit contents of the memory location var. Store the result in eax.
+
+                imul esi, edi, 25       -- esi <-- edi * 25
+
+
+
+
+        idiv -- Integer Division
+
+            - the idiv instruction divides the contents of the 64 bit integer edx:eax (constructed by viewing edx as the most significant four bytes and eax as the least significant four bytes) by the specified operand value
+
+            - the quotient result of the division is stored into eax, while the remainder is placed in edx
+
+
+            --Syntax--
+
+                idiv <reg32>
+                idiv <mem>
+
+
+            --Examples--
+
+                idiv ebx                -- divide the contents of edx:eax by the contents of ebx. Place quotient in eax and remainder in edx
+
+                idiv DWORD PTR <var>    -- divide the contents of edx:eax by the 32-bit value stored at memory location var. Place quotient in eax and remainder in edx
+
+
+        
+
+        and, or, xor -- Bitwise logical and, or, and exclusive or
+
+            -- these instructions perform the specified logical operation on their operands, placing the result in the first operand location
+
+
+            --Syntax--
+
+                and <reg>, <reg>
+                and <reg>, <mem>
+                and <mem>, <reg>
+                and <reg>, <con>
+                and <mem>, <con>
+                
+                or <reg>, <reg>
+                or <reg>, <mem>
+                or <mem>, <reg>
+                or <reg>, <con>
+                or <mem>, <con>
+                
+                xor <reg>, <reg>
+                xor <reg>, <mem>
+                xor <mem>, <reg>
+                xor <reg>, <con>
+                xor <mem>, <con>
+
+
+            --Examples--
+
+                and eax, 0fH    -- clear all but the last 4 bits of eax
+                xor edx, edx    -- set the contents of edx to zero
+
+
+
+
+        not -- Bitwise logical not
+
+            - logically negates the operand contents
+                - flips all bit values in the operand
+
+            
+            --Syntax--
+        
+                not <reg>
+                not <mem>
+
+
+            --Example--
+
+                not BYTE PTR [var]  -- negate all bits in the byte at the memory location var
+    
+
+        
+
+        neg -- Negate
+
+            - performs the two's complement negation of the operand contents
+
+            
+            --Syntax--
+
+                neg <reg>
+                neg <mem>
+
+
+            --Example--
+
+                neg eax     -- eax --> -eax
+
+
+
+
+        shl, shr -- Shift left, shift right
+            
+            - these instructions shift the bits in their first operand's contents left and right, padding the resulting empty bit positions with zeros
+                - the shifted operand can be shifted up to 31 places
+                - the number of bits to shift is specified by the second operand which can be either an 8-bit constant or the register cl
+                - in either case, shifts greater than 31 are performed modulo 32
+
+
+            --Syntax--
+
+                shl <reg>, <con8>
+                shl <mem>, <con8>
+                shl <reg>, <cl>
+                shl <mem>, <cl>
+                
+                shr <reg>, <con8>
+                shr <mem>, <con8>
+                shr <reg>, <cl>
+                shr <mem>, <cl>
+
+           
+            --Examples--
+
+                shl eax, 1      -- multiply the value of eax by 2 (if the most significant bit is 0)
+                shr ebx, cl     -- store in ebx the floor result of dividing the value of ebx by 2^n, where n is the value in cl
+
+
+
+
+    ----Control Flow Instructions----
+        
+        - the x86 processsor maintains an instruction pointer (IP) register that is a 32-bit value indicating the location in memroy where the current instruction starts
+            - normally, it increments to point to the next instruction in memory after executing an instruction
+            - the IP reg cannot be manipulated directly
+                - however, it is updated implicitly by provided control flow instructions
+
+
+        - We use the notation <label> to refer to labeled locatoins in the program text
+            - labels can be inserted anywhere in x86 Assembly code text by entering a label name by a colon
+        --Example--
+            
+                   mov esi, [ebp+8]
+            begin: xor ecx, ecx
+                   mov eax, [esi]
+        
+            - the second instruction in this code fragment is labeled begin
+                - elsewhere in the code, we an refer to the memory location of this instruction by using the more convenient symbolic name begin
+                - this label is convenient way of expressing the location instead of its 32-bit value
+
+
+
+
+        jmp -- Jump
+
+            - transfers program control flow to the instruction at the mmeory location indicated by the operand
+
+
+            --Syntax--
+
+                jmp <label>
+
+
+            --Example--
+
+                jmp begin   -- Jump to the instruction labeled begin
+    
+
+
+
+        jcondition -- Conditional Jump
+
+            - these instructions are conditional jumps that are based on the status of a set of condition codes that are stored in a special register called the mcahine status word
+                - the contents of the machine status word include information about the last arithmetic operation performed
+                    - i.g. one bit of this word indicates if the last result was zero
+                        - another indicates if the last result was negative
+                
+                - based on thes econdition condes, a number of conditional jumps can be performed
+                    - i.g. the jz instruction performs a jump to the specified operand label if the result of the last arithmetic operation was zero; otherwise, continue to the next instruction in sequence
+
+
+            - A number of the conditional branches are given names that are intuitively based on the last operation performed being a special compare instruction, cmp
+                - i.g. conditional branches such as jle and jne are based on first performing a cmp operation on the desired operands
+
+
+            --Syntax--
+
+                je <label> (jump when equal)
+                jne <label> (jump when not equal)
+                jz <label> (jump when last result was zero)
+                jg <label> (jump when greater than)
+                jge <label> (jump when greater than or equal to)
+                jl <label> (jump when less than)
+                jle <label> (jump when less than or equal to)
+
+            --Example--
+
+                cmp eax, ebx
+                jle done
+
+                - if the contents of EAX are less than or equal to the contents of EBX, jump to the label done. Otherwise, continue to the next instruction.
+
+
+
+
+        cmp -- Compare
+
+            - compare the values of the two specified operands, setting the condition codes in the machine status word approprietly
+            - this instruction is equivalent to the sub instruction, except the result o the subtraction is discarded instead of replacing the first operand
+
+            --Syntax--
+
+                cmp <reg>, <reg>
+                cmp <reg>, <mem>
+                cmp <mem>, <reg>
+                cpm <reg>, <con>
+
+
+            --Example--
+                
+                cmp DWORD PTR [var], 10
+                jeq loop
+
+                - if the 4 bytes stored at location var are equal to the 4-byte integer constant 10, jump to the location labeled loop
+
+
+
+
 
 
 
