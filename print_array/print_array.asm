@@ -1,11 +1,10 @@
-; nasm -f elf32 print_array.asm & ld -m elf_i386 print_array.o
+; nasm -f elf32 print_array.asm && ld -m elf_i386 print_array.o
 
 section     .data
     arr:     dd 5, 4, 3, 2, 1 
     arr_len  dd 5
     i        dd 0
     temp     dd 0
-    smallest dd 0
     n        db 0x0a
 
 
@@ -14,34 +13,13 @@ section     .text
 
 
 _start:
-
-
-    sort_array:
-        mov ebx, arr
-        
-        mov ecx, [i]
-        cmp ecx, [arr_len]
-        jge swap_start
-        
-
-        mov smallest, [ebx + ecx*4]
-        inc ecx
-        mov eax, [ebx + ecx*4]
-    
-        mov ecx, [i]
-        cmp [smallest], eax
-
-            
-
-
-
-    print_array:
+    loop_start:
         mov ebx, arr
 
         mov ecx, [i]
         cmp ecx, [arr_len]
 
-        jge print_array_end 
+        jge loop_end 
 
 
         mov eax, [ebx + ecx*4]
@@ -59,11 +37,11 @@ _start:
         call newline
         
         inc dword [i]
-        jmp print_array
+        jmp loop_start
 
 
 
-    print_array_end:
+    loop_end:
         mov eax, 1
         int 0x80
 
