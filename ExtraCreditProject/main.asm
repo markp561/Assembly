@@ -89,7 +89,7 @@ print_array:
                                        ; push rsi, rdi, rdx to stack to preserve.
                                        ; these registers are used for the printf call
                                        ; printf clobbers rdx register so it needs to be saved too
-    push rsi                    
+    push rsi                            
     push rdi                    
     push rdx
 
