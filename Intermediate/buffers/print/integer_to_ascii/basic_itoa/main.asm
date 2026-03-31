@@ -35,18 +35,14 @@ _start:
         jmp loop2
     end: 
         
+    mov [buffer+edi], 0x0A
+    inc edi
     mov eax, 4
     mov ebx, 1
     mov ecx, buffer
     mov edx, edi
     int 0x80
 
-    mov [buffer], 0x0A
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, buffer
-    mov edx, 1
-    int 0x80
-
     mov eax, 1
     int 0x80
+
