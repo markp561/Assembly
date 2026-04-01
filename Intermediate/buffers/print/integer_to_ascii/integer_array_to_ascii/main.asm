@@ -12,15 +12,15 @@ section     .text
 
 
 _start:
-                            ; the print array function takes three arguments, a pointer to the base address of the array, the length of the array, and a pointer to the buffer
-    push buffer             ; third argument
-    push arr_len            ; second argument
-    push arr                ; first argument
+                                ; the print array function takes three arguments, a pointer to the base address of the array, the length of the array, and a pointer to the buffer
+    push buffer                 ; third argument
+    push arr_len                ; second argument
+    push arr                    ; first argument
     
     call print_array
     add esp, 12
 
-                             ; exit program
+                                ; exit program
     mov     eax, 1
     xor     ebx, ebx
     int     0x80
@@ -70,31 +70,31 @@ print_array:
 
 
 itoa:
-    mov ecx, 10         ; divisor
-    xor esi, esi        ; clear esi
+    mov ecx, 10                 ; divisor
+    xor esi, esi                ; clear esi
   
 .loop1:
-    xor edx, edx        ; clear edx
-    idiv ecx             ; divide edx:eax by ecx
-    push edx             ; push the remainder onto the stack
-    inc esi             ; increment the remainder counter
-    test eax, eax        ; check if eax is zero
-    jne .loop1          ; if not then jump to next iteration. if it is then go to loop2
+    xor edx, edx                ; clear edx
+    idiv ecx                    ; divide edx:eax by ecx
+    push edx                    ; push the remainder onto the stack
+    inc esi                     ; increment the remainder counter
+    test eax, eax               ; check if eax is zero
+    jne .loop1                  ; if not then jump to next iteration. if it is then go to loop2
 
-    mov eax, edi        ; this will be returned. it is the base address of the buffer
+    mov eax, edi                ; this will be returned. it is the base address of the buffer
 
 .loop2:
-    pop edx             ; pop a remainder from the stack
-    add dl, '0'         ; append a '0' to convert it to ascii
-    mov [edi], dl       ; mov it into the buffer
-    inc edi             ; increment the buffer so we can append the next digit
-    dec esi             ; decrement the remainder counter
-    jnz .loop2          ; if esi is not zero then jump to next iteration. if it is then the loop is done
+    pop edx                     ; pop a remainder from the stack
+    add dl, '0'                 ; append a '0' to convert it to ascii
+    mov [edi], dl               ; mov it into the buffer
+    inc edi                     ; increment the buffer so we can append the next digit
+    dec esi                     ; decrement the remainder counter
+    jnz .loop2                  ; if esi is not zero then jump to next iteration. if it is then the loop is done
 
-    mov [edi], 0x0A     ; append a newline character to the buffer
-    inc edi             ; increment the buffer
+    mov [edi], 0x0A             ; append a newline character to the buffer
+    inc edi                     ; increment the buffer
 
-    mov edx, edi        ; move the address of the buffer into edx
-    sub edx, eax        ; calculate length of the buffer by subtracting the current address with the base address that was previously stored in eax
+    mov edx, edi                ; move the address of the buffer into edx
+    sub edx, eax                ; calculate length of the buffer by subtracting the current address with the base address that was previously stored in eax
 
     ret
