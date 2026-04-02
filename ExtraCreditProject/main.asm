@@ -1,9 +1,19 @@
 ; nasm -f elf32 main.asm && ld -m elf_i386 main.o
 
 section     .data
+    msg1         db "Enter the array size: "
+    msg1_len     equ ($ - msg1)
+
+    msg2         db "Enter the contents of the array: ", 0x0A
+    msg2_len     equ ($ - msg2)
+    
+    exit_msg     db "Program Ended.", 0x0A
+    exit_msg_len equ ($ - exit_msg)
+
     newline     db 0x0A
+
     arr         dd 33, -44, 11, 55, -2
-    arr_len     equ ($ - arr) / 4
+    arr_len     dd 0
 
     q           dd 0
     i           dd 0
@@ -19,72 +29,95 @@ section     .text
 
 
 _start:
-                                ; the print array function takes three arguments, a pointer to the base address of the array, the length of the array, and a pointer to the buffer
-    push buffer                 ; third argument
-    push arr_len                ; second argument
-    push arr                    ; first argument
+    ; print msg1
+    mov ecx, msg1
+    mov eax, 4
+    mov ebx, 1
+    mov edx, msg1_len
+    int 0x80
+
+    ; take user input for array length
+    mov eax, 3
+    mov ebx, 0
+    mov ecx, buffer
+    mov edx, 16
+    int 0x80
+
+    ; move user input into array length
+    xor eax, eax,
+    mov edi, buffer
+    call atoi
+
+    mov [arr_len], eax
+    
+    ; print_array function takes three arguments: a pointer to base address of the array, length of the array, and pointer to the buffer
+    mov edi, arr
+    mov esi, [arr_len]
+    mov edx, buffer
    
     call print_array
-    add esp, 12
                                 
-                                ; the quicksort function takes three argument: a pointer to the base address of the array, and low and a high indices
-    mov eax, arr_len            ; the array length needs to be decremented by one before passing it to the function, since the length will be used as a high index 
-    dec eax
-    push eax                    ; here arr_len-1 is passed as the third argument
-    push 0                      ; second argument
-    push arr                    ; first argument
+    ; the quicksort function takes three arguments: a pointer to the base address of the array, and low and a high indices
+    mov edi, arr
+    mov esi, 0
+    mov edx, [arr_len]
+    dec edx
 
     call quicksort
-    add esp, 12
 
     
-                                ; here a newline character is printed to seperate the array before and after sorting
+    ; print a newline
     mov ecx, newline
     mov eax, 4
     mov ebx, 1
     mov edx, 1
     int 0x80
     
-                                ; the print_array function is called again with the same arguments as before, this time to display the sorted array
-    push buffer
-    push arr_len
-    push arr
+    ; print the sorted array
+    mov edi, arr
+    mov esi, [arr_len]
+    mov edx, buffer
 
     call print_array
-    add esp, 12
 
+    ; print a newline
     mov ecx, newline
     mov eax, 4
     mov ebx, 1
     mov edx, 1
     int 0x80
 
-                                ; the binary_search function takes three arguments: pinter to base address of array, the length of the array, and a pointer to the target
-    push target
-    mov eax, arr_len
-    dec eax
-    push eax
-    push arr
-
+    ; the binary_search function takes three arguments: pointer to base address of array, the length of the array, and a pointer to the target
+    mov edi, arr
+    mov esi, [arr_len]
+    dec esi
+    mov ebx, [target]
     call binary_search
-    add esp, 12
     
-                                ; convert the output of binary search to ascii to be printed
+    ; convert the output of binary search to ascii to be printed
     mov edi, buffer
     call itoa
-                                ; print the converted integer                
+    
+    ; print the output
     mov ecx, eax
     mov eax, 4
     mov ebx, 1
     int 0x80
 
+    ; print a newline
     mov ecx, newline
     mov eax, 4
     mov ebx, 1
     mov edx, 1
     int 0x80
+    
+    mov ecx, exit_msg
+    mov eax, 4
+    mov ebx, 1
+    mov edx, exit_msg_len
+    int 0x80
 
-                                ; exit program
+    ; exit program
     mov eax, 1
     xor ebx, ebx
     int 0x80
@@ -92,13 +125,7 @@ _start:
 
 ; parameters: array, start index, array length, buffer
 print_array:
-    push ebp
-    mov ebp, esp
-
-    mov edi, [ebp+8]            ; array
-    mov ecx, [ebp+12]           ; array length
-    mov edx, [ebp+16]           ; buffer
-
+    mov ecx, esi
     xor esi, esi
 .loop:
     cmp esi, ecx
@@ -111,6 +138,7 @@ print_array:
     
     mov edi, edx
     push edx
+
     call itoa
         
     mov ecx, eax
@@ -127,7 +155,23 @@ print_array:
     jmp .loop                   ; jump to the next iteration
 
 .end:
-    pop ebp                     
+    ret
+
+
+
+
+atoi:
+    movzx edx, byte [edi]
+    cmp dl, 0x0A
+    je .end
+
+    imul eax, 10
+    sub edx, '0'
+    add eax, edx
+    inc edi
+
+    jmp atoi
+.end:
     ret
 
 
@@ -241,16 +285,8 @@ partition:
 
 
 quicksort:
-    push ebp
-    mov ebp, esp
-    
-    mov edi, [ebp+8]
-    mov esi, [ebp+12]
-    mov edx, [ebp+16]
-
     cmp esi, edx                       ; compare esi (start) to edx (end)
     jge .base_case                     ; if start is greater than or equal to then we need to exit
-    
 
     call partition
 
@@ -259,12 +295,7 @@ quicksort:
     mov edx, eax                       ; move the return value from partition call to edx
     dec edx                            ; decrement edx
     
-    push edx
-    push esi
-    push edi
-
     call quicksort                     ; call quicksort on left partition
-    add esp, 12
 
     pop edx                            ; pop back edx to restore value from before recuesive call
 
@@ -272,30 +303,18 @@ quicksort:
     mov esi, eax                       ; move the return value from partition call to esi
     inc esi                            ; increment esi
 
-    push edx
-    push esi
-    push edi
-
     call quicksort                     ; call quicksort on right partition
-    add esp, 12
 
     pop esi                            ; pop back esi to restore value from before recursive call
 .base_case:                            ; in the base case we just need to exit the function
-    pop ebp
     ret
 
 
 binary_search:
-    push ebp
-    mov ebp, esp
-    
-    mov edi, [ebp+8]               ; arr
-    mov edx, [ebp+12]              ; arr_len
-    mov ebx, [ebp+16]              ; target
-    mov ebx, [ebx]
+    mov edx, esi                        ; array length
 
-    xor esi, esi
-    xor ecx, ecx
+    xor esi, esi                        ; esi used to hold low index
+    xor ecx, ecx                        ; ecx used to hold mid index
 .loop:
     cmp esi, edx                   ; Compare low index to high index
     jg .not_found                  ; If low is greater than high, then exit by jumping to not_found
@@ -325,11 +344,9 @@ binary_search:
 
 .found:                           
     mov eax, ecx                   ; move the index into eax to be returned
-    pop ebp
     ret                            ; target was found so we can exit the function and return the index where it was found
 
 .not_found:                        ; the loop ended and the target was not found
     mov eax, -1
-    pop ebp
     ret                            ; since target was not found we can exit the function and return -1 as an indication that the search was unsuccessful
 
